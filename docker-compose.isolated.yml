@@ -57,7 +57,7 @@ services:
       timescaledb:
         condition: service_healthy
     volumes:
-      - ./services/shared:/app/shared:ro
+      
       - logs:/app/logs
     networks:
       - ml-network
@@ -91,7 +91,7 @@ services:
       chainlink-poller:
         condition: service_started
     volumes:
-      - ./services/shared:/app/shared:ro
+      
       - logs:/app/logs
     networks:
       - ml-network
@@ -128,7 +128,7 @@ services:
       feature-engineer:
         condition: service_started
     volumes:
-      - ./services/shared:/app/shared:ro
+      
       - models:/app/models:ro
       - logs:/app/logs
     networks:
@@ -171,7 +171,7 @@ services:
       timescaledb:
         condition: service_healthy
     volumes:
-      - ./services/shared:/app/shared:ro
+      
       - models:/app/models
       - logs:/app/logs
     networks:

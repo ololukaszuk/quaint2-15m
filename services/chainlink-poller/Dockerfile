@@ -26,7 +26,7 @@ RUN mkdir -p /app/logs
 
 # Health check
 HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
-    CMD python -c "import sys; sys.path.insert(0, '/app'); from shared.db_client import create_db_client_from_env; db = create_db_client_from_env(); exit(0 if db.health_check() else 1)"
+    CMD python -c "import sys; sys.path.insert(0, '/app'); from db_client import create_db_client_from_env; db = create_db_client_from_env(); exit(0 if db.health_check() else 1)"
 
 # Run service
 CMD ["python", "-u", "app.py"]

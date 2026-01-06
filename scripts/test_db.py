@@ -8,8 +8,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'services'))
 
-from shared.db_client import create_db_client_from_env
-from shared import constants
+from db_client import create_db_client_from_env
+import constants
 
 
 def main():

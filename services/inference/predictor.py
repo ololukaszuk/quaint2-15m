@@ -14,10 +14,10 @@ import torch
 import torch.nn as nn
 import xgboost as xgb
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from shared import constants
-from shared.logger import setup_logger_from_env
+
+import constants
+from logger import setup_logger_from_env
 
 logger = setup_logger_from_env('predictor')
 

@@ -14,11 +14,11 @@ from typing import Optional
 import pandas as pd
 from apscheduler.schedulers.background import BackgroundScheduler
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from shared.db_client import create_db_client_from_env
-from shared.logger import setup_logger_from_env
-from shared import constants
+
+from db_client import create_db_client_from_env
+from logger import setup_logger_from_env
+import constants
 from indicators import TechnicalIndicatorCalculator, FeatureNormalizer
 
 logger = setup_logger_from_env('feature-engineer')
