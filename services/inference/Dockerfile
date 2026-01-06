@@ -13,12 +13,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN ln -sf /usr/bin/python3.11 /usr/bin/python && \
     ln -sf /usr/bin/pip3 /usr/bin/pip
 
-
 COPY requirements.txt .
+
+# Install PyTorch with CUDA support first
+RUN pip install --no-cache-dir torch==2.0.1+cu118 --index-url https://download.pytorch.org/whl/cu118
+
+# Install other requirements
+RUN pip install --no-cache-dir -r requirements.txt
+
 COPY *.py ./
 
-RUN pip install --no-cache-dir -r requirements.txt
-RUN python -c "import torch; print('CUDA available:', torch.cuda.is_available())"
+RUN python -c "import torch; print('PyTorch version:', torch.__version__); print('CUDA available:', torch.cuda.is_available())"
 
 RUN mkdir -p /app/logs /app/models/active
 
