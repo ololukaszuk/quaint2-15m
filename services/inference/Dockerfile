@@ -17,16 +17,16 @@ RUN ln -sf /usr/bin/python3.11 /usr/bin/python && \
 
 COPY requirements.txt .
 
-# Install PyTorch with CUDA 12.1 support (compatible with 12.8)
-RUN pip install torch==2.0.1 torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cu121
+# Install PyTorch nightly with CUDA 12.8 support
+RUN pip install --pre torch torchvision --index-url https://download.pytorch.org/whl/nightly/cu128
 
 # Install other requirements
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY *.py ./
 
-# Verify installation
-RUN python -c "import torch; print('PyTorch:', torch.__version__); print('CUDA:', torch.cuda.is_available())"
+# Verify CUDA
+RUN python -c "import torch; print('PyTorch:', torch.__version__); print('CUDA available:', torch.cuda.is_available())"
 
 RUN mkdir -p /app/logs /app/models/active
 

@@ -15,8 +15,8 @@ RUN ln -sf /usr/bin/python3.11 /usr/bin/python && \
 
 COPY requirements.txt .
 
-# Install PyTorch with CUDA 12.1 support
-RUN pip install torch==2.0.1 torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cu121
+# Install PyTorch nightly with CUDA 12.8 support
+RUN pip install --pre torch torchvision --index-url https://download.pytorch.org/whl/nightly/cu128
 
 # Install other requirements
 RUN pip install --no-cache-dir -r requirements.txt
