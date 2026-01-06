@@ -54,7 +54,6 @@ services:
       timescaledb:
         condition: service_healthy
     volumes:
-      
       - logs:/app/logs
     networks:
       - ml-network
@@ -88,7 +87,6 @@ services:
       chainlink-poller:
         condition: service_started
     volumes:
-      
       - logs:/app/logs
     networks:
       - ml-network
@@ -125,7 +123,6 @@ services:
       feature-engineer:
         condition: service_started
     volumes:
-      
       - models:/app/models:ro
       - logs:/app/logs
     networks:
@@ -168,7 +165,6 @@ services:
       timescaledb:
         condition: service_healthy
     volumes:
-      
       - models:/app/models
       - logs:/app/logs
     networks:

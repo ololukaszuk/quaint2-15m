@@ -15,9 +15,6 @@ from typing import Optional, Dict, Any
 import requests
 from apscheduler.schedulers.background import BackgroundScheduler
 
-# Add parent directory to path for shared modules
-
-
 from db_client import create_db_client_from_env
 from logger import setup_logger_from_env
 import constants

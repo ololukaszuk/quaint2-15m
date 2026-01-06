@@ -11,12 +11,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy shared modules
-COPY ../shared /app/shared
-
 # Copy service files
 COPY requirements.txt .
 COPY app.py .
+COPY constants.py .
+COPY db_client.py .
+COPY logger.py .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt

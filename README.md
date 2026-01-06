@@ -285,8 +285,7 @@ btc-ml-system/
 │   ├── chainlink-poller/       # Price data ingestion
 │   ├── feature-engineer/       # Indicator calculation
 │   ├── training/               # Model training
-│   ├── inference/              # Real-time predictions
-│   └── shared/                 # Common utilities
+│   └── inference/              # Real-time predictions
 │
 ├── models/
 │   ├── active/                 # Production models
