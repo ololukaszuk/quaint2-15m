@@ -1,0 +1,210 @@
+version: '3.8'
+
+# FULLY ISOLATED VERSION - NO EXPOSED PORTS
+# Use: docker-compose -f docker-compose.isolated.yml up -d
+# All services communicate only via internal ml-network
+
+services:
+  # ============================================================================
+  # TimescaleDB - NO EXTERNAL PORT
+  # ============================================================================
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: btc-ml-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-mluser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+      POSTGRES_DB: ${DB_NAME:-btc_ml}
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    # NO PORTS EXPOSED - fully isolated
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - ml-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-mluser} -d ${DB_NAME:-btc_ml}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+  # ============================================================================
+  # Chainlink Poller - Price data ingestion
+  # ============================================================================
+  chainlink-poller:
+    build:
+      context: ./services/chainlink-poller
+      dockerfile: Dockerfile
+    container_name: btc-ml-chainlink
+    environment:
+      DB_HOST: timescaledb
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-mluser}
+      DB_PASSWORD: ${DB_PASSWORD:?Database password required}
+      DB_NAME: ${DB_NAME:-btc_ml}
+      CHAINLINK_API_URL: ${CHAINLINK_API_URL:-https://data.chain.link/streams/btc-usd}
+      CHAINLINK_FETCH_INTERVAL: ${CHAINLINK_FETCH_INTERVAL:-60}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_DIR: /app/logs
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    volumes:
+      - ./services/shared:/app/shared:ro
+      - logs:/app/logs
+    networks:
+      - ml-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+
+  # ============================================================================
+  # Feature Engineer - Technical indicator calculation
+  # ============================================================================
+  feature-engineer:
+    build:
+      context: ./services/feature-engineer
+      dockerfile: Dockerfile
+    container_name: btc-ml-features
+    environment:
+      DB_HOST: timescaledb
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-mluser}
+      DB_PASSWORD: ${DB_PASSWORD:?Database password required}
+      DB_NAME: ${DB_NAME:-btc_ml}
+      FEATURE_CALCULATION_INTERVAL: ${FEATURE_CALCULATION_INTERVAL:-60}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_DIR: /app/logs
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      chainlink-poller:
+        condition: service_started
+    volumes:
+      - ./services/shared:/app/shared:ro
+      - logs:/app/logs
+    networks:
+      - ml-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+
+  # ============================================================================
+  # Inference Service - Real-time predictions (GPU-enabled)
+  # ============================================================================
+  inference-service:
+    build:
+      context: ./services/inference
+      dockerfile: Dockerfile
+    container_name: btc-ml-inference
+    environment:
+      DB_HOST: timescaledb
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-mluser}
+      DB_PASSWORD: ${DB_PASSWORD:?Database password required}
+      DB_NAME: ${DB_NAME:-btc_ml}
+      INFERENCE_INTERVAL: ${INFERENCE_INTERVAL:-60}
+      MODEL_PATH: /app/models/active
+      CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-0}
+      PYTORCH_CUDA_ALLOC_CONF: ${PYTORCH_CUDA_ALLOC_CONF:-max_split_size_mb=512}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_DIR: /app/logs
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      feature-engineer:
+        condition: service_started
+    volumes:
+      - ./services/shared:/app/shared:ro
+      - models:/app/models:ro
+      - logs:/app/logs
+    networks:
+      - ml-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+
+  # ============================================================================
+  # Training Service - Daily model retraining (GPU-enabled)
+  # ============================================================================
+  training-service:
+    build:
+      context: ./services/training
+      dockerfile: Dockerfile
+    container_name: btc-ml-training
+    environment:
+      DB_HOST: timescaledb
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-mluser}
+      DB_PASSWORD: ${DB_PASSWORD:?Database password required}
+      DB_NAME: ${DB_NAME:-btc_ml}
+      MODEL_PATH: /app/models
+      CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-0}
+      PYTORCH_CUDA_ALLOC_CONF: ${PYTORCH_CUDA_ALLOC_CONF:-max_split_size_mb=512}
+      TRAINING_SCHEDULE_CRON: ${TRAINING_SCHEDULE_CRON:-0 2 * * *}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_DIR: /app/logs
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    volumes:
+      - ./services/shared:/app/shared:ro
+      - models:/app/models
+      - logs:/app/logs
+    networks:
+      - ml-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+
+# ============================================================================
+# Volumes
+# ============================================================================
+volumes:
+  pgdata:
+    driver: local
+  models:
+    driver: local
+  logs:
+    driver: local
+
+# ============================================================================
+# Networks - ISOLATED, no external access
+# ============================================================================
+networks:
+  ml-network:
+    driver: bridge
+    internal: false  # Set to true for complete isolation from internet
