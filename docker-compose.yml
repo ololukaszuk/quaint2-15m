@@ -114,7 +114,6 @@ services:
       INFERENCE_INTERVAL: ${INFERENCE_INTERVAL:-60}
       MODEL_PATH: /app/models/active
       CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-0}
-      PYTORCH_CUDA_ALLOC_CONF: ${PYTORCH_CUDA_ALLOC_CONF:-max_split_size_mb=512}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOG_DIR: /app/logs
     depends_on:
@@ -157,7 +156,6 @@ services:
       DB_NAME: ${DB_NAME:-btc_ml}
       MODEL_PATH: /app/models
       CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-0}
-      PYTORCH_CUDA_ALLOC_CONF: ${PYTORCH_CUDA_ALLOC_CONF:-max_split_size_mb=512}
       TRAINING_SCHEDULE_CRON: ${TRAINING_SCHEDULE_CRON:-0 2 * * *}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOG_DIR: /app/logs

@@ -163,7 +163,6 @@ LOG_MAX_FILES = int(os.getenv('LOG_MAX_FILES', '10'))
 # ============================================================================
 
 CUDA_VISIBLE_DEVICES = os.getenv('CUDA_VISIBLE_DEVICES', '0')
-PYTORCH_CUDA_ALLOC_CONF = os.getenv('PYTORCH_CUDA_ALLOC_CONF', 'max_split_size_mb=512')
 
 # ============================================================================
 # PREDICTION CONFIGURATION
